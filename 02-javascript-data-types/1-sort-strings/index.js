@@ -17,4 +17,4 @@ export function sortStrings(arr, param = 'asc') {
     
     return param === 'asc' ? comparison : -comparison;
   });
-}
+};
