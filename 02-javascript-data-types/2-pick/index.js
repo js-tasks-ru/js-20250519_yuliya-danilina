@@ -5,5 +5,15 @@
  * @returns {object} - returns the new object
  */
 export const pick = (obj, ...fields) => {
+    const entries = new Map(Object.entries(obj));
+    const resultObj = {};
+    
+    fields.forEach((field) => {
+        if (entries.has(field)) {
+            resultObj[field] = entries.get(field);
+        }
+    })
+
+    return resultObj;
 
 };
