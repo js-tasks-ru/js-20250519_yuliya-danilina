@@ -78,22 +78,35 @@ export default class DoubleSlider {
     const { inner } = this.subElements;
     const { left, width } = inner.getBoundingClientRect();
     
-    const position = (event.clientX - left) / width;
+    // Рассчитываем позицию с ограничением в пределах [0, 1]
+    let position = (event.clientX - left) / width;
+    position = Math.max(0, Math.min(1, position));
+    
     const value = Math.round(this.min + position * (this.max - this.min));
     
     if (this.dragging === 'from') {
-      this.selected.from = Math.min(value, this.selected.to);
+      this.selected.from = Math.min(
+        Math.max(value, this.min),
+        this.selected.to
+      );
     } else {
-      this.selected.to = Math.max(value, this.selected.from);
+      this.selected.to = Math.max(
+        Math.min(value, this.max),
+        this.selected.from
+      );
     }
     
     this.updateView();
   };
 
+  // Завершает процесс перетаскивания, очищая глобальные обработчики и уведомляя внешний мир об изменении диапазона через кастомное событие `range-select`.
   onPointerUp = () => {
     document.removeEventListener('pointermove', this.onPointerMove);
     document.removeEventListener('pointerup', this.onPointerUp);
     
+    // создаем кастомное событие и в свойстве `detail` мы передаем актуальные значения диапазона
+    // событие будет всплывать, подниматься вверх по DOM-дереву, и его можно будет перехватить на любом из родителей элемента
+    // это позволяет другим частям приложения узнать об изменении диапазона. Например, таблица товаров может перезагрузить данные с сервера
     this.element.dispatchEvent(new CustomEvent('range-select', {
       detail: { 
         from: this.selected.from, 
