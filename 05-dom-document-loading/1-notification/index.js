@@ -48,7 +48,7 @@ export default class NotificationMessage {
 
         // Устанавливаем таймер на автоматическое закрытие
         this.timerId = setTimeout(() => {
-        this.remove();
+            this.remove();
         }, this.duration);
 
     }
