@@ -1,13 +1,10 @@
 import SortableTableV1 from '../../05-dom-document-loading/2-sortable-table-v1/index.js';
 
 export default class SortableTableV2 extends SortableTableV1 {
-  arrowElement;
-  currentSort = {};
-
   constructor(headersConfig, {
     data = [],
     sorted = {
-      id: headersConfig.find(item => item.sortable).id,
+      id: headersConfig.find(item => item.sortable)?.id,
       order: 'asc'
     },
     isSortLocally = true
@@ -19,7 +16,19 @@ export default class SortableTableV2 extends SortableTableV1 {
     this.arrowElement = this.createArrowElement();
 
     this.initialize();
-    this.sort(this.currentSort.id, this.currentSort.order);
+    if (sorted.id) {
+      this.sort(this.currentSort.id, this.currentSort.order);
+    }
+  }
+
+  // Переопределяем метод создания ячейки заголовка
+  getHeaderCell({id, title, sortable}) {
+    return `
+      <div class="sortable-table__cell" data-id="${id}" data-sortable="${sortable}">
+        <span>${title}</span>
+        ${sortable ? '<span class="sortable-table__sort-arrow"></span>' : ''}
+      </div>
+    `;
   }
 
   createArrowElement() {
@@ -38,8 +47,9 @@ export default class SortableTableV2 extends SortableTableV1 {
   }
 
   removeDefaultArrows() {
+    // Удаляем только внутренности стрелок
     const arrows = this.subElements.header.querySelectorAll('.sortable-table__sort-arrow');
-    arrows.forEach(arrow => arrow.remove());
+    arrows.forEach(arrow => arrow.innerHTML = '');
   }
 
   sort(fieldId, order) {
@@ -62,16 +72,20 @@ export default class SortableTableV2 extends SortableTableV1 {
     const headers = this.subElements.header.querySelectorAll('[data-sortable="true"]');
     headers.forEach(header => {
       header.dataset.order = '';
-      header.querySelector('.sortable-table__sort-arrow')?.remove();
+      const arrowContainer = header.querySelector('.sortable-table__sort-arrow');
+      if (arrowContainer) arrowContainer.innerHTML = '';
     });
 
     // Устанавливаем состояние для активного заголовка
     const activeHeader = this.subElements.header.querySelector(`[data-id="${fieldId}"]`);
     if (activeHeader) {
       activeHeader.dataset.order = order;
-      activeHeader.append(this.arrowElement);
+      const arrowContainer = activeHeader.querySelector('.sortable-table__sort-arrow');
+      if (arrowContainer) {
+        arrowContainer.appendChild(this.arrowElement);
+      }
       
-      // Поворачиваем стрелку для направления "desc"
+      // Поворачиваем стрелку
       const arrowInner = this.arrowElement.querySelector('.sort-arrow');
       if (arrowInner) {
         arrowInner.style.transform = order === 'desc' ? 'rotate(180deg)' : '';
@@ -80,11 +94,14 @@ export default class SortableTableV2 extends SortableTableV1 {
   }
 
   handleHeaderCellClick = (event) => {
-    const cellElement = event.target.closest('.sortable-table__cell[data-sortable="true"]');
+    const cellElement = event.target.closest('[data-sortable="true"]');
     if (!cellElement) return;
 
     const fieldId = cellElement.dataset.id;
-    const currentOrder = cellElement.dataset.order || 'asc';
+    // Используем текущее состояние, а не DOM
+    const currentOrder = this.currentSort.id === fieldId 
+        ? this.currentSort.order 
+        : 'asc';
     const newOrder = currentOrder === 'asc' ? 'desc' : 'asc';
     
     this.sort(fieldId, newOrder);

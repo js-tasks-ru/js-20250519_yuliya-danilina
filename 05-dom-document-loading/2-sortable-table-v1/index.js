@@ -82,7 +82,7 @@ export default class SortableTableV1 {
   sort(fieldValue, orderValue) {
     const column = this.headerConfig.find(item => item.id === fieldValue);
     
-    if (!column || !column.sortable) return;
+    if (!column || !column.sortable || this.data.length === 0) return;
 
     const directions = {
       asc: 1,
@@ -95,7 +95,9 @@ export default class SortableTableV1 {
         case 'number':
           return direction * (a[fieldValue] - b[fieldValue]);
         case 'string':
-          return direction * a[fieldValue].localeCompare(b[fieldValue], ['ru', 'en']);
+          //return direction * a[fieldValue].localeCompare(b[fieldValue], ['ru', 'en']);
+          // Исправлены параметры localeCompare
+          return direction * a[fieldValue].localeCompare(b[fieldValue], 'ru', { caseFirst: 'upper' });
         default:
           return direction * (a[fieldValue] - b[fieldValue]);
       }
